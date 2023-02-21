@@ -58,6 +58,7 @@ fcntl_fcntl_impl(PyObject *module, int fd, int code, PyObject *arg)
     int async_err = 0;
 
     if (PySys_Audit("fcntl.fcntl", "iiO", fd, code, arg ? arg : Py_None) < 0) {
+        printf("mhg1\n");
         return NULL;
     }
 
@@ -65,41 +66,52 @@ fcntl_fcntl_impl(PyObject *module, int fd, int code, PyObject *arg)
         int parse_result;
 
         if (PyArg_Parse(arg, "s#", &str, &len)) {
+            printf("mhg2\n");
             if ((size_t)len > sizeof buf) {
+                printf("mhg3\n");
                 PyErr_SetString(PyExc_ValueError,
                                 "fcntl string arg too long");
                 return NULL;
             }
             memcpy(buf, str, len);
             do {
+                printf("mhg4\n");
                 Py_BEGIN_ALLOW_THREADS
                 ret = fcntl(fd, code, buf);
                 Py_END_ALLOW_THREADS
             } while (ret == -1 && errno == EINTR && !(async_err = PyErr_CheckSignals()));
             if (ret < 0) {
+                printf("mhg5\n");
                 return !async_err ? PyErr_SetFromErrno(PyExc_OSError) : NULL;
             }
+            printf("mhg6\n");
             return PyBytes_FromStringAndSize(buf, len);
         }
 
+        printf("mhg7\n");
         PyErr_Clear();
         parse_result = PyArg_Parse(arg,
             "I;fcntl requires a file or file descriptor,"
             " an integer and optionally a third integer or a string",
             &int_arg);
         if (!parse_result) {
+          printf("mhg8\n");
           return NULL;
         }
+        printf("mhg9\n");
     }
 
     do {
         Py_BEGIN_ALLOW_THREADS
         ret = fcntl(fd, code, (int)int_arg);
         Py_END_ALLOW_THREADS
+        printf("mhg10 ret: %d, errno: %d, async_err: %d, args: %d %d %d\n", ret, errno, async_err, fd, code, (int)int_arg);
     } while (ret == -1 && errno == EINTR && !(async_err = PyErr_CheckSignals()));
     if (ret < 0) {
+        printf("mhg11\n");
         return !async_err ? PyErr_SetFromErrno(PyExc_OSError) : NULL;
     }
+    printf("mhg12\n");
     return PyLong_FromLong((long)ret);
 }
 
