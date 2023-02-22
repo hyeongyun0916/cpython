@@ -25,6 +25,7 @@ import textwrap
 import json
 import pathlib
 from test.support.os_helper import FakePath
+from test.memory_watchdog import page_size
 
 try:
     import _testcapi
@@ -730,7 +731,7 @@ class ProcessTestCase(BaseTestCase):
             for fifo in [p.stdin, p.stdout, p.stderr]:
                 self.assertEqual(
                     fcntl.fcntl(fifo.fileno(), fcntl.F_GETPIPE_SZ),
-                    pipesize)
+                    max(pipesize, page_size))  # F_SETPIPE_SZ: Attempts to set the pipe capacity below the page size are silently rounded up to the page size.
             # Windows pipe size can be acquired via GetNamedPipeInfoFunction
             # https://docs.microsoft.com/en-us/windows/win32/api/namedpipeapi/nf-namedpipeapi-getnamedpipeinfo
             # However, this function is not yet in _winapi.

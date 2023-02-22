@@ -9,6 +9,7 @@ import unittest
 from test.support import verbose, cpython_only
 from test.support.import_helper import import_module
 from test.support.os_helper import TESTFN, unlink
+from test.memory_watchdog import page_size
 
 
 # Skip test if no fcntl module.
@@ -206,7 +207,7 @@ class TestFcntl(unittest.TestCase):
                     'default pipesize too small to perform test.')
             fcntl.fcntl(test_pipe_w, fcntl.F_SETPIPE_SZ, pipesize)
             self.assertEqual(fcntl.fcntl(test_pipe_w, fcntl.F_GETPIPE_SZ),
-                             pipesize)
+                             max(pipesize, page_size))  # F_SETPIPE_SZ: Attempts to set the pipe capacity below the page size are silently rounded up to the page size.
         finally:
             os.close(test_pipe_r)
             os.close(test_pipe_w)
